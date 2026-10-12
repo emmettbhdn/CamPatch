@@ -2,7 +2,7 @@
 
 CamPatch is a Python CLI foundation for matching physical lighting fixtures to
 a DMX patch plan using RDM and an IP Webcam camera. It is deliberately safe:
-without `--node` it parses and displays the fixture page only, and it never
+without `--node` it parses and displays the patch plan only, and it never
 writes addresses unless `--apply` is supplied and confirmed.
 
 ## Quick start
@@ -13,10 +13,12 @@ py -m venv .venv
 campatch Example\Example-Patch.pdf --list-plan
 ```
 
-The example document uses page 5 as its fixture/DMX page. The parser extracts
+The patch plan must contain exactly one page containing the fixture/DMX data.
+The parser extracts
 the address (`301A`), universe (`3`), patch channel (`403#`), mode, fixture
-name, and the PDF coordinates of each symbol. Pages describing rigging, power,
-and distances are intentionally ignored.
+name, and the PDF coordinates of each symbol. The former multi-page example
+was reduced to this patch page; pages describing rigging, power, and distances
+are not part of the input format.
 
 ## Hardware status
 

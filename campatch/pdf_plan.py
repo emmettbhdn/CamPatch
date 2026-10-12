@@ -1,4 +1,4 @@
-"""Extraction of the fixture table on the final page of a patch-plan PDF."""
+"""Extraction of fixture records from a one-page patch-plan PDF."""
 
 from __future__ import annotations
 
@@ -16,9 +16,12 @@ _PATCH = re.compile(r"^(?P<patch>\d{1,4})$")
 
 
 def _tokens(page) -> list[tuple[str, float, float]]:
+    """Return non-empty text tokens together with their PDF coordinates."""
     result: list[tuple[str, float, float]] = []
 
     def visitor(text, _cm, tm, _font, _size) -> None:
+        # pypdf reports a text block at a coordinate; split blocks into lines
+        # because each field in the patch-plan record is separately readable.
         for line in text.splitlines():
             value = line.strip()
             if value:
@@ -28,20 +31,23 @@ def _tokens(page) -> list[tuple[str, float, float]]:
     return result
 
 
-def read_patch_plan(path: str | Path, page_number: int = 5) -> list[PlannedFixture]:
-    """Read fixture records from ``page_number`` (one-based) of a PDF.
+def read_patch_plan(path: str | Path) -> list[PlannedFixture]:
+    """Read fixture records from the only page in ``path``.
 
-    The example plan places each record in a vertical stack.  The address token
-    is followed by universe and patch channel tokens, then mode and a two-line
-    fixture name.  Coordinates are retained for camera/plan matching.
+    The plan format places each record in a vertical stack. The address token
+    is followed by a literal ``A``, universe, patch channel, ``#``, ``U``,
+    mode, and a one- or two-line fixture name. Coordinates are retained for
+    camera/plan matching.
     """
     reader = PdfReader(str(path))
-    if not 1 <= page_number <= len(reader.pages):
-        raise ValueError(f"page {page_number} is outside this PDF ({len(reader.pages)} pages)")
-    tokens = _tokens(reader.pages[page_number - 1])
+    if len(reader.pages) != 1:
+        raise ValueError(f"patch plan must contain exactly one page (found {len(reader.pages)})")
+    tokens = _tokens(reader.pages[0])
     fixtures: list[PlannedFixture] = []
     for index, (value, x, y) in enumerate(tokens):
         match = _ADDRESS.fullmatch(value)
+        # The address and "A" are emitted as separate tokens by the example
+        # PDF, so identify a record by this stable two-token prefix.
         if not match or index + 7 >= len(tokens) or tokens[index + 1][0] != "A":
             continue
         universe_match = _UNIVERSE.fullmatch(tokens[index + 2][0])
@@ -49,6 +55,8 @@ def read_patch_plan(path: str | Path, page_number: int = 5) -> list[PlannedFixtu
         mode = tokens[index + 6][0].removeprefix("Mode:").strip()
         name_parts = [tokens[index + 7][0]]
         if index + 8 < len(tokens) and tokens[index + 8][1] == tokens[index + 7][1]:
+            # A matching x coordinate indicates the second line of a fixture
+            # name rather than the next fixture record.
             name_parts.append(tokens[index + 8][0])
         if not universe_match or not patch_match or not mode:
             continue

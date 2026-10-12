@@ -6,14 +6,14 @@ import argparse
 import sys
 
 from .pdf_plan import read_patch_plan, summarize
-from .rdm import ArtNetRdmTransport, DryRunTransport
+from .rdm import ArtNetRdmTransport
 from .workflow import apply_assignments, build_assignments
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser while keeping PDF-only use as the default."""
     parser = argparse.ArgumentParser(description="Assign RDM fixtures from a PDF patch plan.")
-    parser.add_argument("pdf", help="patch-plan PDF; page 5 is used by default")
-    parser.add_argument("--page", type=int, default=5, help="one-based fixture page (default: 5)")
+    parser.add_argument("pdf", help="one-page patch-plan PDF")
     parser.add_argument("--node", help="Art-Net node IP; omit for safe PDF-only dry run")
     parser.add_argument("--apply", action="store_true", help="write addresses after confirmation")
     parser.add_argument("--list-plan", action="store_true", help="print parsed fixtures and exit")
@@ -21,16 +21,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the safe review/apply flow and return a process exit code."""
     args = build_parser().parse_args(argv)
     try:
-        planned = read_patch_plan(args.pdf, args.page)
+        planned = read_patch_plan(args.pdf)
         if args.list_plan or not args.node:
             print(summarize(planned))
             if not args.node:
                 print(f"\nParsed {len(planned)} fixtures (dry run; no network traffic).")
                 return 0
         transport = ArtNetRdmTransport(args.node)
-        assignments = build_assignments(args.pdf, transport, args.page)
+        assignments = build_assignments(args.pdf, transport)
         for item in assignments:
             print(f"{item.uid} -> {item.planned.address} {item.planned.fixture_type}")
         if not args.apply:
