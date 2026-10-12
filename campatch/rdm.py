@@ -14,6 +14,8 @@ from .models import DiscoveredFixture
 
 
 class RdmTransport(Protocol):
+    """Operations the workflow needs from any RDM/Art-Net implementation."""
+
     def discover(self) -> list[DiscoveredFixture]: ...
     def identify(self, uid: str, enabled: bool) -> None: ...
     def set_start_address(self, uid: str, address: int) -> None: ...
@@ -26,6 +28,8 @@ class ArtNetRdmTransport:
         self.host, self.port, self.timeout = host, port, timeout
 
     def _send(self, payload: bytes) -> None:
+        # This helper centralizes UDP setup for a future node-specific packet
+        # implementation; current methods intentionally refuse unsafe writes.
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             sock.settimeout(self.timeout)
             sock.sendto(payload, (self.host, self.port))
@@ -44,7 +48,7 @@ class ArtNetRdmTransport:
 
 
 class DryRunTransport:
-    """Safe transport used by default and by tests."""
+    """Safe transport used by tests and offline workflow experiments."""
 
     def __init__(self, fixtures: list[DiscoveredFixture] | None = None) -> None:
         self.fixtures = fixtures or []

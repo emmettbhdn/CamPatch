@@ -8,7 +8,11 @@ from .models import Assignment, CameraFixture, DiscoveredFixture, PlannedFixture
 def nearest_plan_fixture(
     camera: CameraFixture, candidates: list[PlannedFixture]
 ) -> PlannedFixture:
-    """Return the plan point nearest to a normalized camera point."""
+    """Return the plan point nearest to a normalized camera point.
+
+    Squared distance is sufficient here and avoids an unnecessary square-root
+    operation while preserving the ordering of candidate distances.
+    """
     if not candidates:
         raise ValueError("cannot match against an empty patch plan")
     return min(candidates, key=lambda item: (item.pdf_x - camera.x) ** 2 + (item.pdf_y - camera.y) ** 2)
@@ -29,6 +33,8 @@ def propose_assignments(
     remaining = list(planned)
     assignments: list[Assignment] = []
     for index, fixture in enumerate(discovered):
+        # Remove each selected record so two discovered fixtures cannot receive
+        # the same planned address during one proposal pass.
         camera = camera_points[index] if camera_points and index < len(camera_points) else None
         planned_fixture = (
             nearest_plan_fixture(camera, remaining) if camera else remaining[0]

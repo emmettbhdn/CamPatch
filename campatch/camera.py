@@ -10,7 +10,11 @@ from urllib.request import urlopen
 
 
 def fetch_snapshot(base_url: str, timeout: float = 5.0) -> bytes:
-    """Fetch a JPEG from an IP Webcam server."""
+    """Fetch a JPEG from an IP Webcam server.
+
+    Keeping this function byte-oriented means image decoding can be supplied
+    by a later vision implementation without coupling it to network access.
+    """
     url = base_url.rstrip("/") + "/photo.jpg"
     with urlopen(url, timeout=timeout) as response:
         data = response.read()
@@ -28,6 +32,7 @@ def parse_points(value: str) -> list[tuple[float, float]]:
         except (ValueError, TypeError):
             raise ValueError("points must use x,y;x,y;x,y;x,y") from None
         points.append((x, y))
+    # Four corners are required to define a perspective calibration quadrilateral.
     if len(points) != 4:
         raise ValueError("exactly four calibration points are required")
     return points

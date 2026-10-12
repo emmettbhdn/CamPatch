@@ -5,7 +5,11 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class DmxAddress:
-    """A one-based DMX address within an Art-Net universe."""
+    """A one-based DMX address within an Art-Net universe.
+
+    Universe numbering is kept as written in the plan; DMX channel addresses
+    are validated here so invalid values cannot reach an RDM transport.
+    """
 
     universe: int
     address: int
@@ -22,7 +26,7 @@ class DmxAddress:
 
 @dataclass(frozen=True)
 class PlannedFixture:
-    """A fixture record read from the patch plan."""
+    """A fixture record read from the single-page patch plan."""
 
     patch_channel: int
     fixture_type: str
@@ -53,9 +57,8 @@ class CameraFixture:
 
 @dataclass(frozen=True)
 class Assignment:
-    """A proposed relationship between an RDM fixture and a plan address."""
+    """A proposed relationship awaiting user confirmation."""
 
     uid: str
     planned: PlannedFixture
     camera: CameraFixture | None
-

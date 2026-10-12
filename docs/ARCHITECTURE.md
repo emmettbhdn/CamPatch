@@ -2,8 +2,8 @@
 
 The project is split into small layers:
 
-* `pdf_plan.py` reads only the selected fixture page and returns typed plan
-  records with PDF coordinates.
+* `pdf_plan.py` reads the only page in the input PDF and returns typed plan
+  records with PDF coordinates. Multi-page PDFs are rejected.
 * `camera.py` contains IP Webcam acquisition and calibration input parsing.
 * `matching.py` contains pure matching/proposal logic.
 * `rdm.py` defines the `RdmTransport` protocol, a safe dry-run transport, and
