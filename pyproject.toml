@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "campatch"
+version = "0.1.0"
+description = "RDM fixture addressing assistant driven by a patch PDF and camera image."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["pypdf>=4.0"]
+
+[project.scripts]
+campatch = "campatch.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["campatch*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
